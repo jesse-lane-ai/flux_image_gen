@@ -110,6 +110,11 @@ export async function generateImage(params: ImageGenerationParams) {
     if (axios.isAxiosError(error)) {
       console.error('API Error Response:', error.response?.data);
       console.error('API Error Status:', error.response?.status);
+      
+      if (error.response?.status === 402) {
+        throw new Error('You have run out of credits. Please visit https://api.bfl.ml and click "Add" to purchase additional credits.');
+      }
+      
       throw new Error(error.response?.data?.error || 'Failed to generate image');
     }
     throw error;
@@ -134,6 +139,11 @@ export async function listModels() {
     if (axios.isAxiosError(error)) {
       console.error('API Error Response:', error.response?.data);
       console.error('API Error Status:', error.response?.status);
+      
+      if (error.response?.status === 402) {
+        throw new Error('You have run out of credits. Please visit https://api.bfl.ml and click "Add" to purchase additional credits.');
+      }
+      
       throw new Error(error.response?.data?.error || 'Failed to fetch models');
     }
     throw error;

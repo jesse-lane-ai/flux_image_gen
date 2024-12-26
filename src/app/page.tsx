@@ -45,7 +45,7 @@ export default function ImageGeneratorPage() {
 
       setGeneratedImage(imageData);
     } catch (err) {
-      setError('Failed to generate image. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to generate image. Please try again.');
       console.error(err);
     } finally {
       setIsLoading(false);
