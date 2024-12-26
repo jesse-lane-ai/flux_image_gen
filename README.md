@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Flux Image Generator
 
-## Getting Started
+A modern web application built with Next.js that provides an intuitive interface for generating AI images using the Flux API. The application offers advanced customization options and supports multiple Flux models. This is a BYOK (Bring Your Own Key) application, which means you can use your own Flux API key to generate images. Get it here [https://docs.bfl.ml/](https://docs.bfl.ml/)
 
-First, run the development server:
+## Features
+
+- 🎨 Support for multiple Flux AI models:
+  - Flux Pro 1.1
+  - Flux Pro
+  - Flux Dev
+  - Flux Pro 1.1 Ultra
+- 🛠️ Advanced image generation controls:
+  - Customizable dimensions (width/height)
+  - Aspect ratio selection for Ultra model
+  - Adjustable guidance scale
+  - Safety tolerance settings
+  - Prompt upsampling option
+  - Custom seed support
+- 💫 Real-time image generation
+- 📥 Direct image download capability
+- 🎯 Responsive design with dark mode UI
+
+## Prerequisites
+
+- Node.js 18.0 or higher
+- npm or yarn
+- Flux API key
+
+## Setup
+
+1. Clone the repository:
+```bash
+git clone [repository-url]
+cd flux_image_gen
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Configure your API key:
+   - Create a copy of `example.config.json` and name it `config.json`
+   - Add your Flux API key to the configuration file
+
+## Development
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to access the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Select a Flux model from the dropdown menu
+2. Enter your image generation prompt
+3. Adjust generation parameters:
+   - For standard models: Set width and height
+   - For Ultra model: Choose aspect ratio
+   - Configure additional parameters like guidance scale, safety tolerance, and steps
+4. Click "Generate Image" to create your image
+5. Use the download button to save generated images
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/                 # Next.js app directory
+│   ├── page.tsx        # Main image generation interface
+│   └── api/            # API routes
+├── lib/                # Utility functions
+│   ├── flux-api.ts     # Flux API integration
+│   └── config.ts       # Configuration management
+└── public/             # Static assets
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Built With
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Next.js](https://nextjs.org/) - React framework
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
+- [Axios](https://axios-http.com/) - HTTP client
+- [Flux API](https://flux.ai) - AI image generation service
 
-## Deploy on Vercel
+## Environment Variables
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The application requires a Flux API key for authentication. Configure this in your `config.json` file:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```json
+{
+  "fluxKey": "your-flux-api-key"
+}
+```
+
+## License
+
+This project is licensed under the MIT License.

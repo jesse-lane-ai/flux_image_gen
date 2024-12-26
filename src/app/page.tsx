@@ -1,101 +1,299 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState } from 'react';
+import { generateImage, FLUX_MODELS, type FluxModel } from '@/lib/flux-api';
+
+export default function ImageGeneratorPage() {
+  const [prompt, setPrompt] = useState('');
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState<FluxModel>('Flux Pro 1.1');
+
+  // Advanced settings
+  const [width, setWidth] = useState(512);
+  const [height, setHeight] = useState(512);
+  const [aspectRatio, setAspectRatio] = useState('1:1');
+  const [steps, setSteps] = useState(20);
+  const [seed, setSeed] = useState<number | undefined>(undefined);
+  const [guidance, setGuidance] = useState(3);
+  const [safetyTolerance, setSafetyTolerance] = useState(2);
+  const [promptUpsampling, setPromptUpsampling] = useState(false);
+
+  const handleGenerateImage = async () => {
+    if (!prompt) {
+      setError('Please enter a prompt');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const isUltraModel = selectedModel === 'Flux Pro 1.1 Ultra';
+      const imageData = await generateImage({
+        prompt,
+        ...(isUltraModel ? { aspect_ratio: aspectRatio } : { width, height }),
+        steps,
+        seed: seed || undefined,
+        model: selectedModel,
+        guidance,
+        prompt_upsampling: promptUpsampling,
+        safety_tolerance: safetyTolerance,
+        output_format: 'jpeg'
+      });
+
+      setGeneratedImage(imageData);
+    } catch (err) {
+      setError('Failed to generate image. Please try again.');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownloadImage = async () => {
+    if (generatedImage) {
+      try {
+        // Fetch the image
+        const response = await fetch(generatedImage);
+        if (!response.ok) throw new Error('Failed to download image');
+        
+        // Get the blob
+        const blob = await response.blob();
+        
+        // Create object URL
+        const url = window.URL.createObjectURL(blob);
+        
+        // Create temporary link and trigger download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `flux-image-${Date.now()}.jpg`; // Using .jpg since we're generating jpegs
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error('Failed to download image:', err);
+        setError('Failed to download image. Please try again.');
+      }
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-extrabold text-white">Flux Image Generator</h1>
+          <p className="mt-4 text-xl text-gray-300">Create stunning images with AI</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <div className="bg-gray-800 shadow-xl rounded-lg p-8 border border-gray-700">
+          <div className="space-y-6">
+            <div>
+              <label htmlFor="model" className="block text-sm font-medium text-gray-200">
+                Model
+              </label>
+              <select
+                id="model"
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value as FluxModel)}
+                className="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
+              >
+                {Object.keys(FLUX_MODELS).map((model) => (
+                  <option key={model} value={model}>
+                    {model}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="prompt" className="block text-sm font-medium text-gray-200">
+                Prompt
+              </label>
+              <textarea
+                id="prompt"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
+                rows={3}
+                placeholder="Describe the image you want to generate..."
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              {selectedModel === 'Flux Pro 1.1 Ultra' ? (
+                <div className="col-span-2">
+                  <label htmlFor="aspectRatio" className="block text-sm font-medium text-gray-200">
+                    Aspect Ratio
+                  </label>
+                  <select
+                    id="aspectRatio"
+                    value={aspectRatio}
+                    onChange={(e) => setAspectRatio(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
+                  >
+                    <option value="1:1">Square (1:1)</option>
+                    <option value="4:3">Standard (4:3)</option>
+                    <option value="16:9">Widescreen (16:9)</option>
+                    <option value="3:2">Portrait (3:2)</option>
+                    <option value="2:3">Landscape (2:3)</option>
+                  </select>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label htmlFor="width" className="block text-sm font-medium text-gray-200">
+                      Width
+                    </label>
+                    <input
+                      type="number"
+                      id="width"
+                      value={width}
+                      onChange={(e) => setWidth(Number(e.target.value))}
+                      className="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
+                      min={64}
+                      max={2048}
+                      step={64}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="height" className="block text-sm font-medium text-gray-200">
+                      Height
+                    </label>
+                    <input
+                      type="number"
+                      id="height"
+                      value={height}
+                      onChange={(e) => setHeight(Number(e.target.value))}
+                      className="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
+                      min={64}
+                      max={2048}
+                      step={64}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="guidance" className="block text-sm font-medium text-gray-200">
+                  Guidance Scale
+                </label>
+                <input
+                  type="number"
+                  id="guidance"
+                  value={guidance}
+                  onChange={(e) => setGuidance(Number(e.target.value))}
+                  className="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
+                  min={1}
+                  max={20}
+                  step={0.5}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="safetyTolerance" className="block text-sm font-medium text-gray-200">
+                  Safety Tolerance
+                </label>
+                <input
+                  type="number"
+                  id="safetyTolerance"
+                  value={safetyTolerance}
+                  onChange={(e) => setSafetyTolerance(Number(e.target.value))}
+                  className="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
+                  min={0}
+                  max={3}
+                  step={1}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={promptUpsampling}
+                  onChange={(e) => setPromptUpsampling(e.target.checked)}
+                  className="rounded border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500 focus:ring-opacity-50 h-4 w-4"
+                />
+                <span className="text-sm font-medium text-gray-200">Enable Prompt Upsampling</span>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="steps" className="block text-sm font-medium text-gray-200">
+                  Steps
+                </label>
+                <input
+                  type="number"
+                  id="steps"
+                  value={steps}
+                  onChange={(e) => setSteps(Number(e.target.value))}
+                  className="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
+                  min={1}
+                  max={100}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="seed" className="block text-sm font-medium text-gray-200">
+                  Seed (Optional)
+                </label>
+                <input
+                  type="number"
+                  id="seed"
+                  value={seed ?? ''}
+                  onChange={(e) => setSeed(e.target.value ? Number(e.target.value) : undefined)}
+                  className="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
+                />
+              </div>
+            </div>
+
+            <div className="flex space-x-4">
+              <button
+                onClick={handleGenerateImage}
+                disabled={isLoading}
+                className="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Generating...' : 'Generate Image'}
+              </button>
+            </div>
+
+            {error && (
+              <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded relative" role="alert">
+                {error}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {generatedImage && (
+          <div className="bg-gray-800 shadow-xl rounded-lg p-8 text-center border border-gray-700">
+            <h2 className="text-2xl font-bold mb-4 text-white">Generated Image</h2>
+            <div className="flex justify-center mb-4">
+              <img 
+                src={generatedImage} 
+                alt="Generated" 
+                className="max-w-full h-auto rounded-lg shadow-md"
+              />
+            </div>
+            <button
+              onClick={handleDownloadImage}
+              className="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+            >
+              Download Image
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
