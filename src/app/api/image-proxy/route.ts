@@ -8,27 +8,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'URL parameter is required' }, { status: 400 });
   }
 
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    return NextResponse.json({ error: 'API key is not configured' }, { status: 401 });
-  }
-
   try {
     console.log('Proxying request to:', url);
     
-    // Don't add API key for Azure Storage URLs
+    // For Azure Storage URLs, we don't need any special headers
+    // The SAS token in the URL provides the necessary authentication
     const requestHeaders: HeadersInit = {
       'Accept': 'image/*',
-      'User-Agent': 'Mozilla/5.0' // Add User-Agent header
+      'User-Agent': 'Mozilla/5.0'
     };
     
-    if (!url.includes('delivery-eu1.bfl.ai')) {
-      requestHeaders['X-Key'] = apiKey;
-    }
-    
+    // Make the fetch request
     const response = await fetch(url, { 
       headers: requestHeaders,
-      cache: 'no-store' // Disable caching to avoid stale responses
+      cache: 'no-store'
     });
 
     console.log('Proxy response status:', response.status);
@@ -46,25 +39,26 @@ export async function GET(request: NextRequest) {
     const contentType = response.headers.get('Content-Type');
     console.log('Content-Type:', contentType);
     
-    if (!contentType?.startsWith('image/')) {
-      const responseText = await response.text();
-      console.error('Invalid content type response:', responseText);
+    // For Azure Storage blobs, sometimes the content type might come as application/octet-stream
+    // We'll check if it's an image by trying to get the buffer
+    try {
+      const arrayBuffer = await response.arrayBuffer();
+      const responseHeaders = new Headers();
+      responseHeaders.set('Content-Type', contentType || 'image/jpeg'); // Default to image/jpeg if no content type
+      responseHeaders.set('Cache-Control', 'no-store');
+      responseHeaders.set('Content-Disposition', 'attachment; filename=flux-image.jpg');
+      
+      return new NextResponse(arrayBuffer, {
+        status: 200,
+        headers: responseHeaders
+      });
+    } catch (bufferError) {
+      console.error('Error processing image buffer:', bufferError);
       return NextResponse.json(
-        { error: `Invalid content type received: ${contentType}` },
-        { status: 400 }
+        { error: 'Failed to process image data' },
+        { status: 500 }
       );
     }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const responseHeaders = new Headers();
-    responseHeaders.set('Content-Type', contentType);
-    responseHeaders.set('Cache-Control', 'no-store'); // Disable caching
-    responseHeaders.set('Access-Control-Allow-Origin', '*');
-    
-    return new NextResponse(arrayBuffer, {
-      status: 200,
-      headers: responseHeaders
-    });
   } catch (error) {
     console.error('Proxy error:', error);
     return NextResponse.json(

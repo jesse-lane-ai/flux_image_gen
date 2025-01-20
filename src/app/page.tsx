@@ -55,9 +55,15 @@ export default function ImageGeneratorPage() {
   const handleDownloadImage = async () => {
     if (generatedImage) {
       try {
-        // Fetch the image
-        const response = await fetch(generatedImage);
-        if (!response.ok) throw new Error('Failed to download image');
+        // Use our image proxy endpoint
+        const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(generatedImage)}`;
+        
+        // Fetch the image through our proxy
+        const response = await fetch(proxyUrl);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to download image: ${errorText}`);
+        }
         
         // Get the blob
         const blob = await response.blob();
@@ -68,16 +74,19 @@ export default function ImageGeneratorPage() {
         // Create temporary link and trigger download
         const link = document.createElement('a');
         link.href = url;
-        link.download = `flux-image-${Date.now()}.jpg`; // Using .jpg since we're generating jpegs
-        document.body.appendChild(link);
-        link.click();
+        // Use a static filename to avoid hydration errors
+        link.download = 'flux-generated-image.jpg';
         
-        // Cleanup
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        // Append, click, and cleanup in a single tick to avoid hydration issues
+        requestAnimationFrame(() => {
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        });
       } catch (err) {
         console.error('Failed to download image:', err);
-        setError('Failed to download image. Please try again.');
+        setError(err instanceof Error ? err.message : 'Failed to download image. Please try again.');
       }
     }
   };

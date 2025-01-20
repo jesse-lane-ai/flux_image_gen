@@ -3,7 +3,7 @@
 import axios from 'axios';
 import { getApiKey } from './config';
 
-const FLUX_API_BASE_URL = 'https://api.bfl.ml';
+const FLUX_API_BASE_URL = '/api/flux';
 
 export const FLUX_MODELS = {
   'Flux Pro 1.1': '/v1/flux-pro-1.1',
@@ -53,7 +53,7 @@ async function pollResult(id: string, maxAttempts = 30): Promise<string> {
   let attempts = 0;
   while (attempts < maxAttempts) {
     try {
-      const response = await axios.get<GenerationResponse>(`${FLUX_API_BASE_URL}/v1/get_result/?id=${id}`, {
+      const response = await axios.get<GenerationResponse>(`${FLUX_API_BASE_URL}?id=${id}`, {
         headers: {
           'X-Key': apiKey
         }
@@ -92,7 +92,10 @@ export async function generateImage(params: ImageGenerationParams) {
     const { model, ...requestParams } = params;
     const modelEndpoint = FLUX_MODELS[model];
 
-    const response = await axios.post<GenerationResponse>(`${FLUX_API_BASE_URL}${modelEndpoint}`, requestParams, {
+    const response = await axios.post<GenerationResponse>(`${FLUX_API_BASE_URL}`, {
+      ...requestParams,
+      model: modelEndpoint
+    }, {
       headers: {
         'Content-Type': 'application/json',
         'X-Key': apiKey
