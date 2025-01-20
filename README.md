@@ -88,11 +88,7 @@ src/
 
 The application requires a Flux API key for authentication. Configure this in your `.env.local` file:
 
-```json
-{
-  "fluxKey": "your-flux-api-key"
-}
-```
+NEXT_PUBLIC_FLUX_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ## License
 
