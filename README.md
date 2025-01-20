@@ -86,7 +86,7 @@ src/
 
 ## Environment Variables
 
-The application requires a Flux API key for authentication. Configure this in your `config.json` file:
+The application requires a Flux API key for authentication. Configure this in your `.env.local` file:
 
 ```json
 {
